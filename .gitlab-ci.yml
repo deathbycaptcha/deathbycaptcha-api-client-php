@@ -1,0 +1,123 @@
+stages:
+  - test
+  - coverage
+
+variables:
+  COMPOSER_MEMORY_LIMIT: -1
+  COMPOSER_FLAGS: "--no-progress --no-interaction"
+
+# Test on PHP 7.4 LTS (last 7.x version)
+test:php7.4:
+  stage: test
+  image: php:7.4-cli
+  before_script:
+    - apt-get update && apt-get install -y git curl zip unzip
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - composer require --dev phpunit/phpunit:^9.5 --no-interaction
+  script:
+    - ./vendor/bin/phpunit --no-coverage --testdox
+  artifacts:
+    reports:
+      junit: junit.xml
+    paths:
+      - coverage.xml
+    expire_in: 1 week
+  allow_failure: false
+
+# Test on PHP 8.1 LTS
+test:php8.1:
+  stage: test
+  image: php:8.1-cli
+  before_script:
+    - apt-get update && apt-get install -y git curl zip unzip
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - composer install $COMPOSER_FLAGS
+  script:
+    - ./vendor/bin/phpunit --no-coverage --testdox
+  artifacts:
+    reports:
+      junit: junit.xml
+    paths:
+      - coverage.xml
+    expire_in: 1 week
+  allow_failure: false
+
+# Test on PHP 8.3 LTS (latest stable)
+test:php8.3:
+  stage: test
+  image: php:8.3-cli
+  before_script:
+    - apt-get update && apt-get install -y git curl zip unzip
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - composer install $COMPOSER_FLAGS
+  script:
+    - ./vendor/bin/phpunit --no-coverage --testdox
+  artifacts:
+    reports:
+      junit: junit.xml
+    paths:
+      - coverage.xml
+    expire_in: 1 week
+  allow_failure: false
+
+# Live integration tests (requires DBC credentials in env/.env)
+integration:live:
+  stage: test
+  image: php:8.3-cli
+  before_script:
+    - apt-get update && apt-get install -y git curl zip unzip
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - composer install $COMPOSER_FLAGS
+  script:
+    - ./vendor/bin/phpunit --testsuite "Integration Tests" --testdox --colors=always
+  allow_failure: false
+
+# Code coverage analysis (on latest PHP)
+coverage:
+  stage: coverage
+  image: php:8.3-cli
+  variables:
+    XDEBUG_MODE: coverage
+  before_script:
+    - apt-get update && apt-get install -y git curl zip unzip
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - composer install $COMPOSER_FLAGS
+    # Install Xdebug for code coverage
+    - apt-get install -y zlib1g-dev
+    - pecl install xdebug
+    - docker-php-ext-enable xdebug
+  script:
+    - ./vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml --coverage-html=coverage
+  artifacts:
+    paths:
+      - coverage/
+      - coverage.xml
+    expire_in: 30 days
+  coverage: '/Lines:\s+(\d+\.\d+)%/'
+  allow_failure: true
+  only:
+    - main
+    - master
+
+# Code quality checks (optional)
+lint:php:
+  stage: test
+  image: php:8.3-cli
+  script:
+    - find . -path ./vendor -prune -o -type f -name '*.php' -print0 | xargs -0 -I {} php -l {}
+  allow_failure: true
+
+# Syntax check with phpstan (optional)
+phpstan:
+  stage: test
+  image: php:8.3-cli
+  before_script:
+    - apt-get update && apt-get install -y git curl zip unzip
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - composer require --dev phpstan/phpstan
+  script:
+    - ./vendor/bin/phpstan analyse deathbycaptcha.php
+  allow_failure: true
+  only:
+    - main
+    - master

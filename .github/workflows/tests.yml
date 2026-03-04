@@ -1,0 +1,402 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+env:
+  COMPOSER_FLAGS: --no-progress --no-interaction
+
+jobs:
+  # Test on PHP 7.4 LTS (last 7.x version)
+  test-php74:
+    name: "PHP 7.4 LTS Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 7.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: curl, json
+          coverage: none
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-php74-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-php74-
+
+      - name: Install dependencies (PHPUnit 9.5)
+        run: composer require --dev phpunit/phpunit:^9.5 --no-interaction
+
+      - name: Run PHPUnit tests
+        run: ./vendor/bin/phpunit --no-coverage --testdox
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-php74
+          path: junit.xml
+          retention-days: 7
+
+  # Test on PHP 8.1 LTS
+  test-php81:
+    name: "PHP 8.1 LTS Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: curl, json
+          coverage: none
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-php81-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-php81-
+
+      - name: Install dependencies
+        run: composer install ${{ env.COMPOSER_FLAGS }}
+
+      - name: Run PHPUnit tests
+        run: ./vendor/bin/phpunit --no-coverage --testdox
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-php81
+          path: junit.xml
+          retention-days: 7
+
+  # Test on PHP 8.3 LTS (latest stable)
+  test-php83:
+    name: "PHP 8.3 LTS Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, json
+          coverage: none
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-php83-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-php83-
+
+      - name: Install dependencies
+        run: composer install ${{ env.COMPOSER_FLAGS }}
+
+      - name: Run PHPUnit tests
+        run: ./vendor/bin/phpunit --no-coverage --testdox
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-php83
+          path: junit.xml
+          retention-days: 7
+
+  # Live integration tests (optional, requires DBC credentials)
+  integration:
+    name: "Integration Tests (Live API)"
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    env:
+      DBC_USERNAME: ${{ secrets.DBC_USERNAME }}
+      DBC_PASSWORD: ${{ secrets.DBC_PASSWORD }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, json
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-integration-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-integration-
+
+      - name: Install dependencies
+        run: composer install ${{ env.COMPOSER_FLAGS }}
+
+      - name: Run integration tests
+        run: ./vendor/bin/phpunit --testsuite "Integration Tests" --testdox
+
+  # Code coverage analysis (on latest PHP)
+  coverage:
+    name: "Code Coverage (PHP 8.3)"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup PHP 8.3 with Xdebug
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, json, xdebug
+          coverage: xdebug
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-coverage-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-coverage-
+
+      - name: Install dependencies
+        run: composer install ${{ env.COMPOSER_FLAGS }}
+
+      - name: Run tests with coverage
+        run: php -d xdebug.mode=coverage ./vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml --coverage-html=coverage
+
+      - name: Extract coverage percentage
+        id: coverage
+        run: |
+          COVERAGE=$(php -r "
+            \$xml = simplexml_load_file('coverage.xml');
+            \$metrics = \$xml->project->metrics;
+            \$covered = (int)\$metrics['coveredstatements'];
+            \$total = (int)\$metrics['statements'];
+
+            if (\$total <= 0) {
+              \$covered = (int)\$metrics['coveredelements'];
+              \$total = (int)\$metrics['elements'];
+            }
+
+            if (\$total <= 0) {
+              \$covered = (int)\$metrics['coveredmethods'];
+              \$total = (int)\$metrics['methods'];
+            }
+
+            if (\$total > 0) {
+              \$percentage = round((\$covered / \$total) * 100);
+            } else {
+              \$percentage = 0;
+            }
+            echo \$percentage;
+          ")
+          echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
+          echo "Coverage: $COVERAGE%"
+
+      - name: Create coverage badge
+        run: |
+          mkdir -p .coverage
+          COVERAGE=${{ steps.coverage.outputs.percentage }}
+          if [ $COVERAGE -ge 80 ]; then
+            COLOR="brightgreen"
+          elif [ $COVERAGE -ge 70 ]; then
+            COLOR="green"
+          elif [ $COVERAGE -ge 60 ]; then
+            COLOR="yellowgreen"
+          elif [ $COVERAGE -ge 50 ]; then
+            COLOR="yellow"
+          else
+            COLOR="red"
+          fi
+          echo "Coverage badge: coverage-${COVERAGE}%-${COLOR}.svg"
+          cat > .coverage/badge.json << EOF
+          {"schemaVersion": 1, "label": "coverage", "message": "$COVERAGE%", "color": "$COLOR"}
+          EOF
+
+      - name: Commit coverage badge
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update coverage badge: ${{ steps.coverage.outputs.percentage }}%"
+          file_pattern: .coverage/badge.json
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions[bot]@users.noreply.github.com
+          commit_author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage/
+            coverage.xml
+            .coverage/badge.json
+          retention-days: 30
+
+  # Generate test status badges for all job types
+  badges:
+    name: "Generate Test Badges"
+    needs: [test-php74, test-php81, test-php83, integration, lint, phpstan]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate badge metadata
+        run: |
+          # Create badges directory
+          mkdir -p .badges/php74 .badges/php81 .badges/php83 .badges/integration .badges/lint .badges/phpstan
+          
+          # Function to create badge JSON
+          create_badge() {
+            local status=$1
+            local label=$2
+            local path=$3
+            
+            if [[ "$status" == "success" ]]; then
+              MESSAGE="passing"
+              COLOR="brightgreen"
+            elif [[ "$status" == "skipped" ]]; then
+              MESSAGE="skipped"
+              COLOR="inactive"
+            else
+              MESSAGE="failing"
+              COLOR="red"
+            fi
+            
+            cat > "$path/badge.json" <<EOF
+          {
+            "schemaVersion": 1,
+            "label": "$label",
+            "message": "$MESSAGE",
+            "color": "$COLOR"
+          }
+          EOF
+          }
+          
+          # Generate badges for each job
+          create_badge "${{ needs.test-php74.result }}" "PHP 7.4" ".badges/php74"
+          create_badge "${{ needs.test-php81.result }}" "PHP 8.1" ".badges/php81"
+          create_badge "${{ needs.test-php83.result }}" "PHP 8.3" ".badges/php83"
+          create_badge "${{ needs.integration.result }}" "Integration" ".badges/integration"
+          create_badge "${{ needs.lint.result }}" "Lint" ".badges/lint"
+          create_badge "${{ needs.phpstan.result }}" "PHPStan" ".badges/phpstan"
+          
+          # List generated badges
+          echo "Generated badges:"
+          find .badges -type f -name "badge.json" -exec echo "  {}" \; | sort
+          
+          # Show git status for debugging
+          echo ""
+          echo "Git status after badge generation:"
+          git status --short || true
+
+      - name: Commit badges
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update test status badges"
+          file_pattern: .badges/**/badge.json
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions[bot]@users.noreply.github.com
+
+  # PHP syntax check
+  lint:
+    name: "PHP Syntax Check"
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+
+      - name: Check PHP syntax
+        run: find . -path ./vendor -prune -o -type f -name '*.php' -print0 | xargs -0 -I {} php -l {}
+
+  # Static analysis with PHPStan
+  phpstan:
+    name: "PHPStan Static Analysis"
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, json
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-phpstan-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-phpstan-
+
+      - name: Install PHPStan
+        run: composer require --dev phpstan/phpstan
+
+      - name: Run PHPStan analysis
+        run: ./vendor/bin/phpstan analyse deathbycaptcha.php

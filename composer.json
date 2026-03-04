@@ -1,0 +1,71 @@
+{
+    "name": "deathbycaptcha/deathbycaptcha-api-php",
+    "description": "Official Death by Captcha API Client for PHP - Solve CAPTCHAs automatically including reCAPTCHA v2/v3, hCaptcha, Cloudflare Turnstile, FunCaptcha, GeeTest, and more",
+    "type": "library",
+    "keywords": [
+        "captcha",
+        "deathbycaptcha",
+        "solver",
+        "recaptcha",
+        "hcaptcha",
+        "turnstile",
+        "geetest",
+        "funcaptcha",
+        "captcha-solver",
+        "api-client"
+    ],
+    "homepage": "https://deathbycaptcha.com",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "DeathByCaptcha",
+            "email": "support@deathbycaptcha.com",
+            "homepage": "https://deathbycaptcha.com",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "email": "support@deathbycaptcha.com",
+        "issues": "https://github.com/deathbycaptcha/deathbycaptcha-api-client-php/issues",
+        "docs": "https://deathbycaptcha.com/api",
+        "source": "https://github.com/deathbycaptcha/deathbycaptcha-api-client-php"
+    },
+    "require": {
+        "php": ">=7.4",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5 || ^10.0"
+    },
+    "suggest": {
+        "ext-sockets": "For using Socket API client (faster performance)"
+    },
+    "autoload": {
+        "classmap": [
+            "deathbycaptcha.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit --no-coverage",
+        "test-verbose": "phpunit --no-coverage --testdox",
+        "test-integration": "phpunit --testsuite \"Integration Tests\" --testdox",
+        "test-coverage": "phpunit --coverage-html=coverage --coverage-clover=coverage.xml",
+        "lint": "find . -path ./vendor -prune -o -type f -name '*.php' -print0 | xargs -0 -I {} php -l {}",
+        "post-install-cmd": [
+            "@php -r \"echo '\\n✓ DeathByCaptcha PHP API installed successfully!\\n';\""
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "preferred-install": "dist"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

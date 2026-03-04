@@ -1,0 +1,49 @@
+# PHP
+*.log
+*.swp
+*.swo
+*~
+
+# Composer
+/vendor/
+composer.lock
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Credentials (if any)
+config.php
+credentials.php
+.env
+.env.local
+# PHPUnit
+.phpunit.cache/
+coverage/
+coverage.xml
+
+# Coverage badge (include badge.json only)
+.coverage/*
+!.coverage/badge.json
+
+# Test status badges (include badge.json files)
+.badges/*
+!.badges/php74/
+!.badges/php81/
+!.badges/php83/
+!.badges/integration/
+!.badges/lint/
+!.badges/phpstan/
+.badges/*/*
+!.badges/*/badge.json
+
+# Test Reports
+.phpunit.result.cache
+junit.xmlreadme.html
+.gitlab-ci-local/

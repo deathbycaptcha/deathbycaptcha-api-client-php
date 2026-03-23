@@ -371,3 +371,7 @@ Both CI systems run the full test suite (74 tests, 158 assertions) on every push
 | Integration Tests | [![Integration](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/deathbycaptcha/deathbycaptcha-api-client-php/master/.badges/integration/badge.json)](https://github.com/deathbycaptcha/deathbycaptcha-api-client-php/actions/workflows/tests.yml) |
 | PHP Linting | [![Lint](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/deathbycaptcha/deathbycaptcha-api-client-php/master/.badges/lint/badge.json)](https://github.com/deathbycaptcha/deathbycaptcha-api-client-php/actions/workflows/tests.yml) |
 | PHPStan Analysis | [![PHPStan](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/deathbycaptcha/deathbycaptcha-api-client-php/master/.badges/phpstan/badge.json)](https://github.com/deathbycaptcha/deathbycaptcha-api-client-php/actions/workflows/tests.yml) |
+
+## Responsible Use
+
+See [Responsible Use Agreement](RESPONSIBLE_USE.md).

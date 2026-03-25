@@ -1,3 +1,0 @@
-[submodule "api-metadata"]
-	path = api-metadata
-	url = https://github.com/deathbycaptcha/deathbycaptcha-agent-api-metadata.git

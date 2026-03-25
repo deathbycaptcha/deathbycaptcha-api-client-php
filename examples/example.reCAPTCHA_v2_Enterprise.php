@@ -1,6 +1,12 @@
 <?php
 /**
- * Death by Captcha PHP API capy puzzle usage example
+ * Death by Captcha PHP API reCAPTCHA v2 Enterprise usage example
+ *
+ * reCAPTCHA v2 Enterprise is an advanced version of reCAPTCHA v2 providing
+ * more detailed risk analysis. It uses type=25 and token_enterprise_params
+ * instead of the token_params used for standard reCAPTCHA v2 (type=4).
+ *
+ * Note: proxy is mandatory for reCAPTCHA v2 Enterprise.
  *
  * @package DBCAPI
  * @subpackage PHP
@@ -24,20 +30,23 @@ $client->is_verbose = true;
 
 echo "Your balance is {$client->balance} US cents\n";
 
+// Set the proxy and reCAPTCHA v2 Enterprise data.
+// Note: proxy is mandatory for reCAPTCHA v2 Enterprise.
 $data = array(
-    'proxy' => 'http://user:password@127.0.0.1:1234',
+    'proxy'     => 'http://user:password@127.0.0.1:1234',
     'proxytype' => 'HTTP',
-    'captchakey' => 'PUZZLE_AFEmfepfm33mpfm3pmceom',
-    'api_server' => 'https://www.capy.me/',
-    'pageurl' => 'https://www.capy.me/products/puzzle_captcha/'
+    'googlekey' => '6Le-wvkSAAAAAPBMRTvw0Q4Muexq9bi0DJwx_mJ-',
+    'pageurl'   => 'https://www.google.com/recaptcha/api2/demo',
 );
+
 // Create a json string
 $json = json_encode($data);
 
-// Put the type and the json payload
+// Put the type and the json payload.
+// Use type=25 and token_enterprise_params (not token_params).
 $extra = [
-    'type' => 15,
-    'capy_params' => $json,
+    'type'                    => 25,
+    'token_enterprise_params' => $json,
 ];
 
 // Put null the first parameter and add the extra payload
@@ -46,7 +55,7 @@ if ($captcha = $client->decode(null, $extra)) {
 
     sleep(DeathByCaptcha_Client::DEFAULT_TIMEOUT);
 
-    // Poll for CAPTCHA indexes:
+    // Poll for CAPTCHA result:
     if ($text = $client->get_text($captcha['captcha'])) {
         echo "CAPTCHA {$captcha['captcha']} solved: {$text}\n";
 
